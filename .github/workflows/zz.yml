@@ -15,15 +15,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Auto Merge PR
         run: |
           PR_URL=$(jq -r ".pull_request.url" "$GITHUB_EVENT_PATH")
           PR_NUMBER=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
           
-          APPROVALS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$PR_URL/reviews" | jq '.[] | select(.state == "APPROVED") | .user.login' | sort -u | wc -l)
+          APPROVALS=$(curl -s -H "Authorization: Bearer ${{ secrets.AUTO_MERGE }}" "$PR_URL/reviews" | jq '[.[] | select(.state == "APPROVED") | .user.login] | length')
           
           if [ "$APPROVALS" -ge 1 ]; then
-            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d '{"merge_method": "merge"}' "$PR_URL/merge"
+            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.AUTO_MERGE }}" -d '{"merge_method": "merge"}' "$PR_URL/merge"
           fi
