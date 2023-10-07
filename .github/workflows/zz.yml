@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Auto Merge PR
+        shell: bash
         env:
           SECRET: ${{ secrets.MERGE }}
         run: |
