@@ -23,13 +23,17 @@ jobs:
           PR_NUMBER=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
           echo "Pull Request URL: $PR_URL"
           echo "Pull Request Number: $PR_NUMBER"  
-          echo "GitHub API Response:"
+          API_RESPONSE=$(curl -s -H "Authorization: Bearer zzz" "$PR_URL/reviews")
+          echo "API Response: $API_RESPONSE"
 
-          curl -s -H "Authorization: zzz" "$PR_URL/reviews"
-
-          APPROVALS=$(curl -s -H "Authorization: Bearer zzz" "$PR_URL/reviews" | jq '.[] | select(.state == "APPROVED") | .user.login' | wc -l)
-
-
+          APPROVALS=$(echo "$API_RESPONSE" | jq '.[] | select(.state == "APPROVED") | .user.login' | wc -l)
+          echo "Secret Value: ${{ secrets.AUTO_MERGE }}"
           if [ "$APPROVALS" -ge 1 ]; then
-            curl -s -X PUT -H "Authorization: Bearer zzz" -d '{"merge_method": "merge"}' "$PR_URL/merge"
+          curl -L \
+          -X PUT \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer zzz" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "$PR_URL/merge" \
+          -d '{"merge_method": "merge"}' 
           fi
